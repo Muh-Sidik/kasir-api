@@ -5,136 +5,102 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
+
+	"github.com/Muh-Sidik/kasir-api/database"
+	"github.com/Muh-Sidik/kasir-api/docs"
+	_ "github.com/Muh-Sidik/kasir-api/docs"
+	"github.com/Muh-Sidik/kasir-api/internal/handler"
+	"github.com/swaggo/http-swagger/v2"
 )
 
-type Produk struct {
-	ID    int    `json:"id"`
-	Nama  string `json:"nama"`
-	Harga int    `json:"harga"`
-	Stok  int    `json:"stok"`
-}
+// @title Swagger Kasir API
+// @version 1.0
+// @description This is a kasir server.
+// @termsOfService http://swagger.io/terms/
 
-var product = []*Produk{
-	{1, "Indomie Godog", 3500, 10},
-	{2, "Vit 1000ml", 3000, 40},
-}
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
 
-func getProductByID(id int, w http.ResponseWriter) {
-	for _, p := range product {
-		if p.ID == id {
-			json.NewEncoder(w).Encode(*p)
-			return
-		}
-	}
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-	http.Error(w, "Produk Not Found", http.StatusNotFound)
-}
-
-func deleteProductByID(id int, w http.ResponseWriter) {
-	for i, p := range product {
-		if p.ID == id {
-			productName := p.Nama
-			product = append(product[:i], product[i+1:]...)
-			json.NewEncoder(w).Encode(map[string]string{
-				"status":  "OK",
-				"message": "Success delete produk " + productName,
-			})
-			return
-		}
-	}
-
-	http.Error(w, "Produk Not Found", http.StatusNotFound)
-}
-
-func updateProduct(id int, w http.ResponseWriter, r *http.Request) {
-	updateProduct := new(Produk)
-	err := json.NewDecoder(r.Body).Decode(updateProduct)
-
-	if err != nil {
-		http.Error(w, "Invalid Request", http.StatusBadRequest)
-		return
-	}
-	for i := range product {
-		if product[i].ID == id {
-			updateProduct.ID = product[i].ID
-			product[i].Nama = updateProduct.Nama
-			product[i].Harga = updateProduct.Harga
-			product[i].Stok = updateProduct.Stok
-
-			json.NewEncoder(w).Encode(*updateProduct)
-			return
-		}
-	}
-	http.Error(w, "Produk Not Found", http.StatusNotFound)
-}
-
+// @host kasir-api-production-e286.up.railway.app
+// @BasePath /
 func main() {
-	// DELETE http://localhost:8000/api/produk/:id
-	// PUT http://localhost:8000/api/produk/:id
-	// GET http://localhost:8000/api/produk/:id
-	http.HandleFunc("/api/produk/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	mode := "local"
 
-		idParam := strings.TrimPrefix(r.URL.Path, "/api/produk/")
+	switch mode {
+	case "local":
+		docs.SwaggerInfo.Host = "localhost:8000"
+	case "railway":
+		docs.SwaggerInfo.Host = "kasir-api-production-e286.up.railway.app"
+	}
+	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
-		id, err := strconv.Atoi(idParam)
+	db := database.New()
+	defer db.Close()
 
-		if err != nil {
-			http.Error(w, "Invalid Produk Id", http.StatusBadRequest)
-			return
-		}
+	handler := handler.Handler{
+		DB: db,
+	}
 
-		switch r.Method {
-		case "GET":
-			getProductByID(id, w)
-		case "PUT":
-			updateProduct(id, w, r)
-		case "DELETE":
-			deleteProductByID(id, w)
-		}
-	})
+	mux := http.NewServeMux()
 
-	// POST http://localhost:8000/api/produk
-	// GET http://localhost:8000/api/produk
-	http.HandleFunc("/api/produk", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	// DELETE http://localhost:8000/api/categories/{id}
+	mux.HandleFunc("DELETE /api/categories/{id}", handler.DeleteCategoryByID)
+	// PUT http://localhost:8000/api/categories/{id}
+	mux.HandleFunc("PUT /api/categories/{id}", handler.UpdateCategoryByID)
+	// GET http://localhost:8000/api/categories/{id}
+	mux.HandleFunc("GET /api/categories/{id}", handler.GetCategoryByID)
 
-		if r.Method == "POST" {
-			newProduct := new(Produk)
-			err := json.NewDecoder(r.Body).Decode(newProduct)
+	// POST http://localhost:8000/api/categories
+	mux.HandleFunc("POST /api/categories", handler.CreateCategory)
+	// GET http://localhost:8000/api/categories
+	mux.HandleFunc("GET /api/categories", handler.Categories)
 
-			if err != nil {
-				http.Error(w, "Invalid Request", http.StatusBadRequest)
-				return
-			}
+	// DELETE http://localhost:8000/api/product/{id}
+	mux.HandleFunc("DELETE /api/product/{id}", handler.DeleteProductByID)
+	// PUT http://localhost:8000/api/product/{id}
+	mux.HandleFunc("PUT /api/product/{id}", handler.UpdateProductByID)
+	// GET http://localhost:8000/api/product/{id}
+	mux.HandleFunc("GET /api/product/{id}", handler.GetProductByID)
 
-			newProduct.ID = len(product) + 1
-			product = append(product, newProduct)
+	// POST http://localhost:8000/api/product
+	mux.HandleFunc("POST /api/product", handler.CreateProduct)
+	// GET http://localhost:8000/api/product
+	mux.HandleFunc("GET /api/product", handler.Products)
 
-			w.WriteHeader(http.StatusCreated)
-			json.NewEncoder(w).Encode(*newProduct)
-			return
-		}
-
-		json.NewEncoder(w).Encode(product)
-	})
+	mux.HandleFunc("GET /docs/", httpSwagger.Handler(
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	))
 
 	// GET http://localhost:8000/health
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "OK",
-			"message": "API Kasih is running",
+			"message": "Server is running",
+		})
+	})
+
+	// GET http://localhost:8000
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":  "OK",
+			"message": "Kasir Api, check documentation at " + r.Host + "/docs",
 		})
 	})
 
 	fmt.Println("Successfully listen server in port :8000")
 	err := http.ListenAndServe(
 		":8000",
-		nil,
+		mux,
 	)
 
 	if err != nil {
