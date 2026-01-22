@@ -54,10 +54,11 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 // @Tags         Categories
 // @Accept       json
 // @Produce      json
+//
 //	@Param		 category	body		model.Categories	true	"Add category"
+//
 // @Success      200  {object} 			map[string]any
 // @Router       /api/categories [post]
-
 func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 

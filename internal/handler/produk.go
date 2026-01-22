@@ -58,10 +58,11 @@ func (h *Handler) Products(w http.ResponseWriter, r *http.Request) {
 // @Tags         Product
 // @Accept       json
 // @Produce      json
+//
 //	@Param		 product	body		model.Produk	true	"Add product"
+//
 // @Success      200  {object} 			map[string]any
 // @Router       /api/product [post]
-
 func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
