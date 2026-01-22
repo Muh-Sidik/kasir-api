@@ -25,10 +25,9 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host kasir-api-production-e286.up.railway.app
 // @BasePath /
 func main() {
-	mode := "local"
+	mode := "railway"
 
 	switch mode {
 	case "local":
@@ -36,7 +35,7 @@ func main() {
 	case "railway":
 		docs.SwaggerInfo.Host = "kasir-api-production-e286.up.railway.app"
 	}
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+	docs.SwaggerInfo.Schemes = []string{"https", "http"}
 
 	db := database.New()
 	defer db.Close()
