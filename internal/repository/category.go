@@ -9,10 +9,10 @@ import (
 
 type CategoryRepository interface {
 	GetCategories(paginate *request.PaginateRes) ([]*model.Categories, int, error)
-	GetCategoryByID(id int) (*model.Categories, error)
+	GetCategoryByID(id string) (*model.Categories, error)
 	CreateCategory(category *model.Categories) (*model.Categories, error)
-	UpdateCategoryByID(id int, category *model.Categories) (*model.Categories, error)
-	DeleteCategoryByID(id int) error
+	UpdateCategoryByID(id string, category *model.Categories) (*model.Categories, error)
+	DeleteCategoryByID(id string) error
 }
 
 type categoryRepo struct {
@@ -26,16 +26,12 @@ func NewCategoryRepository(db *sql.DB) CategoryRepository {
 }
 
 func (c *categoryRepo) GetCategories(paginate *request.PaginateRes) ([]*model.Categories, int, error) {
-	query := `SELECT id, name, description, created_at, updated_at FROM categories WHERE 1=1 LIMIT ? OFFSET ?`
+	query := `SELECT id, name, description, created_at, updated_at FROM categories WHERE 1=1 LIMIT $1 OFFSET $2`
 
 	rows, err := c.db.Query(query, paginate.Limit, paginate.Offset)
 
 	if err != nil {
 		return nil, 0, err
-	}
-
-	if rows.Err() != nil {
-		return nil, 0, rows.Err()
 	}
 
 	defer rows.Close()
@@ -59,8 +55,12 @@ func (c *categoryRepo) GetCategories(paginate *request.PaginateRes) ([]*model.Ca
 		categories = append(categories, &category)
 	}
 
+	if rows.Err() != nil {
+		return nil, 0, rows.Err()
+	}
+
 	var total int
-	err = c.db.QueryRow(`SELECT COUNT(*) FROM categories`).Scan(&total)
+	err = c.db.QueryRow(`SELECT COUNT(*) FROM categories WHERE 1=1`).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -70,7 +70,7 @@ func (c *categoryRepo) GetCategories(paginate *request.PaginateRes) ([]*model.Ca
 
 func (c *categoryRepo) CreateCategory(body *model.Categories) (*model.Categories, error) {
 	rows := c.db.QueryRow(
-		`INSERT INTO categories(id, name, description, created_at, updated_at) VALUES(?,?,NOW(),NOW()) RETURNING id, created_at, updated_at`,
+		`INSERT INTO categories(id, name, description, created_at, updated_at) VALUES($1,$2,$3,NOW(),NOW()) RETURNING id, created_at, updated_at`,
 		body.ID,
 		body.Name,
 		body.Description,
@@ -95,8 +95,8 @@ func (c *categoryRepo) CreateCategory(body *model.Categories) (*model.Categories
 	return &category, nil
 }
 
-func (c *categoryRepo) GetCategoryByID(id int) (*model.Categories, error) {
-	query := `SELECT id, name, description, created_at, updated_at FROM categories WHERE id = ?`
+func (c *categoryRepo) GetCategoryByID(id string) (*model.Categories, error) {
+	query := `SELECT id, name, description, created_at, updated_at FROM categories WHERE id = $1`
 
 	rows := c.db.QueryRow(query, id)
 
@@ -120,9 +120,9 @@ func (c *categoryRepo) GetCategoryByID(id int) (*model.Categories, error) {
 	return &category, nil
 }
 
-func (c *categoryRepo) DeleteCategoryByID(id int) error {
+func (c *categoryRepo) DeleteCategoryByID(id string) error {
 	_, err := c.db.Exec(
-		`DELETE FROM categories WHERE id = ?`,
+		`DELETE FROM categories WHERE id = $1`,
 		id,
 	)
 
@@ -133,9 +133,9 @@ func (c *categoryRepo) DeleteCategoryByID(id int) error {
 	return nil
 }
 
-func (c *categoryRepo) UpdateCategoryByID(id int, body *model.Categories) (*model.Categories, error) {
+func (c *categoryRepo) UpdateCategoryByID(id string, body *model.Categories) (*model.Categories, error) {
 	rows := c.db.QueryRow(
-		`UPDATE categories SET name = ?, description = ?, updated_at = NOW() WHERE id = ? RETURNING id, created_at, updated_at`,
+		`UPDATE categories SET name = $1, description = $2, updated_at = NOW() WHERE id = $3 RETURNING id, created_at, updated_at`,
 		body.Name,
 		body.Description,
 		id,

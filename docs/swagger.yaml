@@ -154,7 +154,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: Update account
         in: body
         name: account

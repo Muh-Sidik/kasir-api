@@ -12,7 +12,6 @@ type ProductCategory struct {
 	Price        int       `sql:"price" json:"price"`
 	Stock        int       `sql:"stock" json:"stock"`
 	CategoryName string    `sql:"category_name" json:"category_name"`
-	CategoryID   uuid.UUID `sql:"category_id" json:"category_id"`
 	CreatedAt    time.Time `sql:"created_at" json:"created_at"`
 	UpdatedAt    time.Time `sql:"updated_at" json:"updated_at"`
 }

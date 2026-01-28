@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/Muh-Sidik/kasir-api/internal/model/dto/reqdto"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/response"
+	"github.com/Muh-Sidik/kasir-api/internal/pkg/utils"
 )
 
 // @Summary      Show product
@@ -67,6 +67,13 @@ func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	product, err := h.ProductSrv.CreateProduct(&body)
 
 	if err != nil {
+		if errors.Is(err, utils.ErrCategoryNotFound) {
+			response.Failed(
+				"Not Found category",
+				err,
+			).JSON(w, http.StatusNotFound)
+			return
+		}
 		response.Failed(
 			"Failed Create Product",
 			err,
@@ -89,16 +96,8 @@ func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 // @Success			200	{object}	map[string]any
 // @Router			/api/product/{id} [get]
 func (h *Handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
-	idParams := r.PathValue("id")
+	id := r.PathValue("id")
 
-	id, err := strconv.Atoi(idParams)
-	if err != nil {
-		response.Failed(
-			"Invalid Request",
-			err,
-		).JSON(w, http.StatusBadRequest)
-		return
-	}
 	product, err := h.ProductSrv.GetProductByID(id)
 
 	if err != nil {
@@ -134,16 +133,7 @@ func (h *Handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 // @Success		200		{object}	map[string]any
 // @Router			/api/product/{id} [put]
 func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
-	idParams := r.PathValue("id")
-
-	id, err := strconv.Atoi(idParams)
-	if err != nil {
-		response.Failed(
-			"Invalid Request",
-			err,
-		).JSON(w, http.StatusBadRequest)
-		return
-	}
+	id := r.PathValue("id")
 
 	body, err := request.BindJSON[reqdto.ProductRequest](r)
 	if err != nil {
@@ -157,6 +147,14 @@ func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 	product, err := h.ProductSrv.UpdateProductByID(id, &body)
 
 	if err != nil {
+		if errors.Is(err, utils.ErrCategoryNotFound) {
+			response.Failed(
+				"Not Found category",
+				err,
+			).JSON(w, http.StatusNotFound)
+			return
+		}
+
 		if errors.Is(err, sql.ErrNoRows) {
 			response.Failed(
 				"Not Found product",
@@ -188,18 +186,9 @@ func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 // @Success			200	{object}	map[string]any
 // @Router			/api/product/{id} [delete]
 func (h *Handler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
-	idParams := r.PathValue("id")
+	id := r.PathValue("id")
 
-	id, err := strconv.Atoi(idParams)
-	if err != nil {
-		response.Failed(
-			"Invalid Request",
-			err,
-		).JSON(w, http.StatusBadRequest)
-		return
-	}
-
-	err = h.ProductSrv.DeleteProductByID(id)
+	err := h.ProductSrv.DeleteProductByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -221,5 +210,5 @@ func (h *Handler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
 		"Successfully delete product",
 		nil,
 		nil,
-	).JSON(w, http.StatusNoContent)
+	).JSON(w, http.StatusOK)
 }

@@ -141,7 +141,7 @@ const docTemplate = `{
                 "summary": "Update a category",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Category ID",
                         "name": "id",
                         "in": "path",

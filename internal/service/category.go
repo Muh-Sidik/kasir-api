@@ -10,10 +10,10 @@ import (
 
 type CategoryService interface {
 	GetCategories(paginate *request.PaginateRes) ([]*model.Categories, int, error)
-	GetCategoryByID(id int) (*model.Categories, error)
+	GetCategoryByID(id string) (*model.Categories, error)
 	CreateCategory(category *reqdto.CategoryRequest) (*model.Categories, error)
-	UpdateCategoryByID(id int, category *reqdto.CategoryRequest) (*model.Categories, error)
-	DeleteCategoryByID(id int) error
+	UpdateCategoryByID(id string, category *reqdto.CategoryRequest) (*model.Categories, error)
+	DeleteCategoryByID(id string) error
 }
 
 type categoryService struct {
@@ -42,15 +42,15 @@ func (s *categoryService) CreateCategory(req *reqdto.CategoryRequest) (*model.Ca
 	})
 }
 
-func (s *categoryService) GetCategoryByID(id int) (*model.Categories, error) {
+func (s *categoryService) GetCategoryByID(id string) (*model.Categories, error) {
 	return s.categoryRepo.GetCategoryByID(id)
 }
 
-func (s *categoryService) DeleteCategoryByID(id int) error {
+func (s *categoryService) DeleteCategoryByID(id string) error {
 	return s.categoryRepo.DeleteCategoryByID(id)
 }
 
-func (s *categoryService) UpdateCategoryByID(id int, req *reqdto.CategoryRequest) (*model.Categories, error) {
+func (s *categoryService) UpdateCategoryByID(id string, req *reqdto.CategoryRequest) (*model.Categories, error) {
 	return s.categoryRepo.UpdateCategoryByID(id, &model.Categories{
 		Name:        req.Name,
 		Description: req.Description,

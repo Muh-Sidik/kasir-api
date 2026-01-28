@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/Muh-Sidik/kasir-api/internal/model/dto/reqdto"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
@@ -90,16 +89,8 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Success			200	{object}	map[string]any
 // @Router			/api/categories/{id} [get]
 func (h *Handler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
-	idParams := r.PathValue("id")
+	id := r.PathValue("id")
 
-	id, err := strconv.Atoi(idParams)
-	if err != nil {
-		response.Failed(
-			"Invalid Request",
-			err,
-		).JSON(w, http.StatusBadRequest)
-		return
-	}
 	category, err := h.CategorySrv.GetCategoryByID(id)
 
 	if err != nil {
@@ -130,21 +121,12 @@ func (h *Handler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Tags			Categories
 // @Accept			json
 // @Produce		json
-// @Param			id		path		int					true	"Category ID"
+// @Param			id		path		string					true	"Category ID"
 // @Param			account	body		model.Categories	true	"Update account"
 // @Success		200		{object}	map[string]any
 // @Router			/api/categories/{id} [put]
 func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
-	idParams := r.PathValue("id")
-
-	id, err := strconv.Atoi(idParams)
-	if err != nil {
-		response.Failed(
-			"Invalid Request",
-			err,
-		).JSON(w, http.StatusBadRequest)
-		return
-	}
+	id := r.PathValue("id")
 
 	body, err := request.BindJSON[reqdto.CategoryRequest](r)
 	if err != nil {
@@ -189,18 +171,9 @@ func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Success			200	{object}	map[string]any
 // @Router			/api/categories/{id} [delete]
 func (h *Handler) DeleteCategoryByID(w http.ResponseWriter, r *http.Request) {
-	idParams := r.PathValue("id")
+	id := r.PathValue("id")
 
-	id, err := strconv.Atoi(idParams)
-	if err != nil {
-		response.Failed(
-			"Invalid Request",
-			err,
-		).JSON(w, http.StatusBadRequest)
-		return
-	}
-
-	err = h.CategorySrv.DeleteCategoryByID(id)
+	err := h.CategorySrv.DeleteCategoryByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
