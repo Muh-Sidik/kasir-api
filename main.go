@@ -1,16 +1,15 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/Muh-Sidik/kasir-api/config"
 	"github.com/Muh-Sidik/kasir-api/database"
 	"github.com/Muh-Sidik/kasir-api/docs"
 	_ "github.com/Muh-Sidik/kasir-api/docs"
-	"github.com/Muh-Sidik/kasir-api/internal/handler"
-	"github.com/swaggo/http-swagger/v2"
+	"github.com/Muh-Sidik/kasir-api/internal/route"
 )
 
 // @title Swagger Kasir API
@@ -27,74 +26,17 @@ import (
 
 // @BasePath /
 func main() {
-	mode := "railway"
+	e := config.LoadConfig()
 
-	switch mode {
-	case "local":
-		docs.SwaggerInfo.Host = "localhost:8000"
-	case "railway":
-		docs.SwaggerInfo.Host = "kasir-api-production-e286.up.railway.app"
-	}
+	docs.SwaggerInfo.Host = e.APP_HOST + ":" + e.APP_PORT
 	docs.SwaggerInfo.Schemes = []string{"https", "http"}
 
-	db := database.New()
+	db := database.New(e)
 	defer db.Close()
-
-	handler := handler.Handler{
-		DB: db,
-	}
 
 	mux := http.NewServeMux()
 
-	// DELETE http://localhost:8000/api/categories/{id}
-	mux.HandleFunc("DELETE /api/categories/{id}", handler.DeleteCategoryByID)
-	// PUT http://localhost:8000/api/categories/{id}
-	mux.HandleFunc("PUT /api/categories/{id}", handler.UpdateCategoryByID)
-	// GET http://localhost:8000/api/categories/{id}
-	mux.HandleFunc("GET /api/categories/{id}", handler.GetCategoryByID)
-
-	// POST http://localhost:8000/api/categories
-	mux.HandleFunc("POST /api/categories", handler.CreateCategory)
-	// GET http://localhost:8000/api/categories
-	mux.HandleFunc("GET /api/categories", handler.Categories)
-
-	// DELETE http://localhost:8000/api/product/{id}
-	mux.HandleFunc("DELETE /api/product/{id}", handler.DeleteProductByID)
-	// PUT http://localhost:8000/api/product/{id}
-	mux.HandleFunc("PUT /api/product/{id}", handler.UpdateProductByID)
-	// GET http://localhost:8000/api/product/{id}
-	mux.HandleFunc("GET /api/product/{id}", handler.GetProductByID)
-
-	// POST http://localhost:8000/api/product
-	mux.HandleFunc("POST /api/product", handler.CreateProduct)
-	// GET http://localhost:8000/api/product
-	mux.HandleFunc("GET /api/product", handler.Products)
-
-	mux.HandleFunc("GET /docs/", httpSwagger.Handler(
-		httpSwagger.DeepLinking(true),
-		httpSwagger.DocExpansion("none"),
-		httpSwagger.DomID("swagger-ui"),
-	))
-
-	// GET http://localhost:8000/health
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "OK",
-			"message": "Server is running",
-		})
-	})
-
-	// GET http://localhost:8000
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "OK",
-			"message": "Kasir Api, check documentation at " + r.Host + "/docs",
-		})
-	})
+	route.Setup(mux, e, db)
 
 	fmt.Println("Successfully listen server in port :8000")
 	err := http.ListenAndServe(

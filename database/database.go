@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 
-	_ "modernc.org/sqlite"
+	"github.com/Muh-Sidik/kasir-api/config"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func New() *sql.DB {
-	db, err := sql.Open("sqlite", "./kasir.db")
+func New(e *config.Env) *sql.DB {
+
+	db, err := sql.Open("pgx", e.DB_URL)
 
 	if err != nil {
 		log.Fatalf("error open database: %v", err)
@@ -21,16 +23,21 @@ func New() *sql.DB {
 
 	sqlStmt := `
 	CREATE TABLE IF NOT EXISTS produk (
-		id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		nama TEXT,
-		harga REAL,
-		stok INTEGER
+		id UUID PRIMARY KEY DEFAULT uuidv7(),
+		name VARCHAR(255),
+		price REAL,
+		stock INTEGER,
+		category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+		created_at TIMESTAMP DEFAULT NOW(),
+		updated_at TIMESTAMP DEFAULT NOW()
 	);
-	
+
 	CREATE TABLE IF NOT EXISTS categories (
-		id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-		name TEXT,
-		description TEXT
+		id UUID PRIMARY KEY DEFAULT uuidv7(),
+		name VARCHAR(255),
+		description TEXT,
+		created_at TIMESTAMP DEFAULT NOW(),
+		updated_at TIMESTAMP DEFAULT NOW()
 	);`
 
 	_, err = db.Exec(sqlStmt)

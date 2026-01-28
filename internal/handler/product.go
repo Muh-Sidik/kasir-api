@@ -11,33 +11,33 @@ import (
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/response"
 )
 
-// @Summary      Show categories
-// @Description  get list category
-// @Tags         Categories
+// @Summary      Show product
+// @Description  get list product
+// @Tags         Product
 // @Accept       json
 // @Produce      json
 // @Param		 page		query		int	false	"Page number"
 // @Param		 per_page	query		int	false	"Items per page"
 // @Success      200  {object}  map[string]any
-// @Router       /api/categories [get]
-func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
+// @Router       /api/product [get]
+func (h *Handler) Products(w http.ResponseWriter, r *http.Request) {
 	page := r.URL.Query().Get("page")
 	perPage := r.URL.Query().Get("per_page")
 
 	paginate := request.Paginate(page, perPage)
-	category, total, err := h.CategorySrv.GetCategories(paginate)
+	product, total, err := h.ProductSrv.GetProduct(paginate)
 
 	if err != nil {
 		response.Failed(
-			"Failed get categories",
+			"Failed get products",
 			err,
 		).JSON(w, http.StatusInternalServerError)
 		return
 	}
 
 	response.OK(
-		"Successfully get categories",
-		category,
+		"Successfully get data products",
+		product,
 		&response.Meta{
 			Total: total,
 			Page:  paginate.Page,
@@ -46,16 +46,16 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 	).JSON(w, http.StatusOK)
 }
 
-// @Summary      Create categories
-// @Description  create a category
-// @Tags         Categories
+// @Summary      Create product
+// @Description  create a product
+// @Tags         Product
 // @Accept       json
 // @Produce      json
-// @Param		 category	body		model.Categories	true	"Add category"
+// @Param		 product	body		model.Product	true	"Add product"
 // @Success      200  {object} 			map[string]any
-// @Router       /api/categories [post]
-func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	body, err := request.BindJSON[model.Categories](r)
+// @Router       /api/product [post]
+func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	body, err := request.BindJSON[model.Product](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -64,32 +64,31 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.CategorySrv.CreateCategory(&body)
+	product, err := h.ProductSrv.CreateProduct(&body)
 
 	if err != nil {
 		response.Failed(
-			"Failed create category",
+			"Failed Create Product",
 			err,
 		).JSON(w, http.StatusInternalServerError)
 		return
 	}
 
-	response.OK(
-		"Successfully create category",
-		category,
-		nil,
+	response.Created(
+		"Successfully create product",
+		product,
 	).JSON(w, http.StatusCreated)
 }
 
-// @Summary			Show a category
-// @Description		get category by ID
-// @Tags			Categories
+// @Summary			Show a product
+// @Description		get product by ID
+// @Tags			Product
 // @Accept			json
 // @Produce			json
-// @Param			id	path		int		true	"Category ID"
+// @Param			id	path		int		true	"Product ID"
 // @Success			200	{object}	map[string]any
-// @Router			/api/categories/{id} [get]
-func (h *Handler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
+// @Router			/api/product/{id} [get]
+func (h *Handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 	idParams := r.PathValue("id")
 
 	id, err := strconv.Atoi(idParams)
@@ -100,41 +99,41 @@ func (h *Handler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 		).JSON(w, http.StatusBadRequest)
 		return
 	}
-	category, err := h.CategorySrv.GetCategoryByID(id)
+	product, err := h.ProductSrv.GetProductByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			response.Failed(
-				"Not Found category",
+				"Not Found product",
 				err,
 			).JSON(w, http.StatusNotFound)
 			return
 		}
 
 		response.Failed(
-			"Failed get category",
+			"Failed get product",
 			err,
 		).JSON(w, http.StatusInternalServerError)
 		return
 	}
 
 	response.OK(
-		"Successfully get category",
-		category,
+		"Successfully get product",
+		product,
 		nil,
 	).JSON(w, http.StatusOK)
 }
 
-// @Summary		Update a category
-// @Description	Update category by ID
-// @Tags			Categories
+// @Summary		Update a product
+// @Description	Update product by ID
+// @Tags			Product
 // @Accept			json
 // @Produce		json
-// @Param			id		path		int					true	"Category ID"
-// @Param			account	body		model.Categories	true	"Update account"
+// @Param			id		path		int					true	"Product ID"
+// @Param			account	body		model.Produk	true	"Update product"
 // @Success		200		{object}	map[string]any
-// @Router			/api/categories/{id} [put]
-func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
+// @Router			/api/product/{id} [put]
+func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 	idParams := r.PathValue("id")
 
 	id, err := strconv.Atoi(idParams)
@@ -146,7 +145,7 @@ func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := request.BindJSON[model.Categories](r)
+	body, err := request.BindJSON[model.Product](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -155,40 +154,40 @@ func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.CategorySrv.UpdateCategoryByID(id, &body)
+	product, err := h.ProductSrv.UpdateProductByID(id, &body)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			response.Failed(
-				"Not Found category",
+				"Not Found product",
 				err,
 			).JSON(w, http.StatusNotFound)
 			return
 		}
 
 		response.Failed(
-			"Failed update category",
+			"Failed update product",
 			err,
 		).JSON(w, http.StatusInternalServerError)
 		return
 	}
 
 	response.OK(
-		"Successfully update category",
-		category,
+		"Successfully update product",
+		product,
 		nil,
 	).JSON(w, http.StatusOK)
 }
 
-// @Summary			Delete a category
-// @Description		delete category by ID
-// @Tags			Categories
+// @Summary			Delete a product
+// @Description		delete product by ID
+// @Tags			Product
 // @Accept			json
 // @Produce			json
-// @Param			id	path		int		true	"Category ID"
+// @Param			id	path		int		true	"Product ID"
 // @Success			200	{object}	map[string]any
-// @Router			/api/categories/{id} [delete]
-func (h *Handler) DeleteCategoryByID(w http.ResponseWriter, r *http.Request) {
+// @Router			/api/product/{id} [delete]
+func (h *Handler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
 	idParams := r.PathValue("id")
 
 	id, err := strconv.Atoi(idParams)
@@ -200,27 +199,27 @@ func (h *Handler) DeleteCategoryByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.CategorySrv.DeleteCategoryByID(id)
+	err = h.ProductSrv.DeleteProductByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			response.Failed(
-				"Not Found category",
+				"Not Found product",
 				err,
 			).JSON(w, http.StatusNotFound)
 			return
 		}
 
 		response.Failed(
-			"Failed delete category",
+			"Failed delete product",
 			err,
 		).JSON(w, http.StatusInternalServerError)
 		return
 	}
 
 	response.OK(
-		"Successfully delete category",
+		"Successfully delete product",
 		nil,
 		nil,
-	).JSON(w, http.StatusOK)
+	).JSON(w, http.StatusNoContent)
 }
