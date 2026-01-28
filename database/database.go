@@ -28,20 +28,20 @@ func New(e *config.Env) *sql.DB {
 	}
 
 	sqlStmt := `
+	CREATE TABLE IF NOT EXISTS categories (
+		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+		name VARCHAR(255),
+		description TEXT,
+		created_at TIMESTAMP DEFAULT NOW(),
+		updated_at TIMESTAMP DEFAULT NOW()
+	);
+
 	CREATE TABLE IF NOT EXISTS product (
 		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 		name VARCHAR(255),
 		price REAL,
 		stock INTEGER,
 		category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
-		created_at TIMESTAMP DEFAULT NOW(),
-		updated_at TIMESTAMP DEFAULT NOW()
-	);
-
-	CREATE TABLE IF NOT EXISTS categories (
-		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-		name VARCHAR(255),
-		description TEXT,
 		created_at TIMESTAMP DEFAULT NOW(),
 		updated_at TIMESTAMP DEFAULT NOW()
 	);`
