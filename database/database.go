@@ -29,7 +29,7 @@ func New(e *config.Env) *sql.DB {
 
 	sqlStmt := `
 	CREATE TABLE IF NOT EXISTS product (
-		id UUID PRIMARY KEY DEFAULT uuidv7(),
+		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 		name VARCHAR(255),
 		price REAL,
 		stock INTEGER,
@@ -39,7 +39,7 @@ func New(e *config.Env) *sql.DB {
 	);
 
 	CREATE TABLE IF NOT EXISTS categories (
-		id UUID PRIMARY KEY DEFAULT uuidv7(),
+		id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 		name VARCHAR(255),
 		description TEXT,
 		created_at TIMESTAMP DEFAULT NOW(),
