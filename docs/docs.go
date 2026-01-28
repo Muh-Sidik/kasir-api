@@ -37,6 +37,20 @@ const docTemplate = `{
                     "Categories"
                 ],
                 "summary": "Show categories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -66,7 +80,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Categories"
+                            "$ref": "#/definitions/reqdto.CategoryRequest"
                         }
                     }
                 ],
@@ -198,6 +212,20 @@ const docTemplate = `{
                     "Product"
                 ],
                 "summary": "Show product",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -227,7 +255,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Produk"
+                            "$ref": "#/definitions/reqdto.ProductRequest"
                         }
                     }
                 ],
@@ -300,7 +328,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Produk"
+                            "$ref": "#/definitions/reqdto.ProductRequest"
                         }
                     }
                 ],
@@ -351,31 +379,61 @@ const docTemplate = `{
         "model.Categories": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
         },
-        "model.Produk": {
+        "reqdto.CategoryRequest": {
             "type": "object",
+            "required": [
+                "description",
+                "name"
+            ],
             "properties": {
-                "harga": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "nama": {
+                "description": {
                     "type": "string"
                 },
-                "stok": {
+                "name": {
+                    "type": "string",
+                    "minLength": 3
+                }
+            }
+        },
+        "reqdto.ProductRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "name",
+                "price",
+                "stock"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 3
+                },
+                "price": {
                     "type": "integer"
+                },
+                "stock": {
+                    "type": "integer",
+                    "minimum": 0
                 }
             }
         }

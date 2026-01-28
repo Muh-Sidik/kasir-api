@@ -70,7 +70,8 @@ func (c *categoryRepo) GetCategories(paginate *request.PaginateRes) ([]*model.Ca
 
 func (c *categoryRepo) CreateCategory(body *model.Categories) (*model.Categories, error) {
 	rows := c.db.QueryRow(
-		`INSERT INTO categories(name, description, created_at, updated_at) VALUES(?,?,NOW(),NOW()) RETURNING id, created_at, updated_at`,
+		`INSERT INTO categories(id, name, description, created_at, updated_at) VALUES(?,?,NOW(),NOW()) RETURNING id, created_at, updated_at`,
+		body.ID,
 		body.Name,
 		body.Description,
 	)

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Muh-Sidik/kasir-api/internal/model"
+	"github.com/Muh-Sidik/kasir-api/internal/model/dto/reqdto"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/response"
 )
@@ -51,11 +51,11 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 // @Tags         Categories
 // @Accept       json
 // @Produce      json
-// @Param		 category	body		model.Categories	true	"Add category"
+// @Param		 category	body		reqdto.CategoryRequest	true	"Add category"
 // @Success      200  {object} 			map[string]any
 // @Router       /api/categories [post]
 func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	body, err := request.BindJSON[model.Categories](r)
+	body, err := request.BindJSON[reqdto.CategoryRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -146,7 +146,7 @@ func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := request.BindJSON[model.Categories](r)
+	body, err := request.BindJSON[reqdto.CategoryRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",

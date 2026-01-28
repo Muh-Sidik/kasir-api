@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Muh-Sidik/kasir-api/internal/model"
+	"github.com/Muh-Sidik/kasir-api/internal/model/dto/reqdto"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/response"
 )
@@ -51,11 +51,11 @@ func (h *Handler) Products(w http.ResponseWriter, r *http.Request) {
 // @Tags         Product
 // @Accept       json
 // @Produce      json
-// @Param		 product	body		model.Product	true	"Add product"
+// @Param		 product	body		reqdto.ProductRequest	true	"Add product"
 // @Success      200  {object} 			map[string]any
 // @Router       /api/product [post]
 func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
-	body, err := request.BindJSON[model.Product](r)
+	body, err := request.BindJSON[reqdto.ProductRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -130,7 +130,7 @@ func (h *Handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 // @Accept			json
 // @Produce		json
 // @Param			id		path		int					true	"Product ID"
-// @Param			account	body		model.Produk	true	"Update product"
+// @Param			account	body		reqdto.ProductRequest	true	"Update product"
 // @Success		200		{object}	map[string]any
 // @Router			/api/product/{id} [put]
 func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +145,7 @@ func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, err := request.BindJSON[model.Product](r)
+	body, err := request.BindJSON[reqdto.ProductRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",

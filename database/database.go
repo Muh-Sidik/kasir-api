@@ -4,6 +4,7 @@ import (
 	"database/sql" // Package for SQL database interactions
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Muh-Sidik/kasir-api/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -17,17 +18,22 @@ func New(e *config.Env) *sql.DB {
 		log.Fatalf("error open database: %v", err)
 	}
 
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(30 * time.Minute)
+	db.SetConnMaxIdleTime(5 * time.Minute)
+
 	if err := db.Ping(); err != nil {
 		log.Fatalf("error ping database: %v", err)
 	}
 
 	sqlStmt := `
-	CREATE TABLE IF NOT EXISTS produk (
+	CREATE TABLE IF NOT EXISTS product (
 		id UUID PRIMARY KEY DEFAULT uuidv7(),
 		name VARCHAR(255),
 		price REAL,
 		stock INTEGER,
-		category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+		category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
 		created_at TIMESTAMP DEFAULT NOW(),
 		updated_at TIMESTAMP DEFAULT NOW()
 	);

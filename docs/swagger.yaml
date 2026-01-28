@@ -2,23 +2,45 @@ basePath: /
 definitions:
   model.Categories:
     properties:
+      created_at:
+        type: string
       description:
         type: string
       id:
-        type: integer
+        type: string
       name:
         type: string
-    type: object
-  model.Produk:
-    properties:
-      harga:
-        type: integer
-      id:
-        type: integer
-      nama:
+      updated_at:
         type: string
-      stok:
+    type: object
+  reqdto.CategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        minLength: 3
+        type: string
+    required:
+    - description
+    - name
+    type: object
+  reqdto.ProductRequest:
+    properties:
+      category_id:
+        type: string
+      name:
+        minLength: 3
+        type: string
+      price:
         type: integer
+      stock:
+        minimum: 0
+        type: integer
+    required:
+    - category_id
+    - name
+    - price
+    - stock
     type: object
 info:
   contact:
@@ -38,6 +60,15 @@ paths:
       consumes:
       - application/json
       description: get list category
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
       produces:
       - application/json
       responses:
@@ -59,7 +90,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/model.Categories'
+          $ref: '#/definitions/reqdto.CategoryRequest'
       produces:
       - application/json
       responses:
@@ -146,6 +177,15 @@ paths:
       consumes:
       - application/json
       description: get list product
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: per_page
+        type: integer
       produces:
       - application/json
       responses:
@@ -167,7 +207,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/model.Produk'
+          $ref: '#/definitions/reqdto.ProductRequest'
       produces:
       - application/json
       responses:
@@ -237,7 +277,7 @@ paths:
         name: account
         required: true
         schema:
-          $ref: '#/definitions/model.Produk'
+          $ref: '#/definitions/reqdto.ProductRequest'
       produces:
       - application/json
       responses:
