@@ -99,7 +99,7 @@ func (p *productRepo) GetProduct(dto *dto.ProductQuery) ([]*model.ProductCategor
 	err = p.db.QueryRow(fmt.Sprintf(`
 		SELECT COUNT(*) FROM product p
 		JOIN categories c ON p.category_id = c.id
-		WHERE %s
+		%s
 	`, whereClause.String()), args[:len(args)-2]...).Scan(&total)
 	if err != nil {
 		return nil, 0, err
