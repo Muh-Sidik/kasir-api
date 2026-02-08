@@ -39,6 +39,12 @@ const docTemplate = `{
                 "summary": "Show categories",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Search by Category",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
@@ -80,7 +86,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/reqdto.CategoryRequest"
+                            "$ref": "#/definitions/dto.CategoryRequest"
                         }
                     }
                 ],
@@ -199,6 +205,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/checkout": {
+            "post": {
+                "description": "create checkout",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Transaction"
+                ],
+                "summary": "Create Checkout",
+                "parameters": [
+                    {
+                        "description": "Add checkout",
+                        "name": "checkout",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CheckoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/product": {
             "get": {
                 "description": "get list product",
@@ -213,6 +254,18 @@ const docTemplate = `{
                 ],
                 "summary": "Show product",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search by Product Name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by category id",
+                        "name": "categoryId",
+                        "in": "query"
+                    },
                     {
                         "type": "integer",
                         "description": "Page number",
@@ -255,7 +308,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/reqdto.ProductRequest"
+                            "$ref": "#/definitions/dto.ProductRequest"
                         }
                     }
                 ],
@@ -328,7 +381,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/reqdto.ProductRequest"
+                            "$ref": "#/definitions/dto.ProductRequest"
                         }
                     }
                 ],
@@ -373,30 +426,48 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/report": {
+            "get": {
+                "description": "get report",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Report"
+                ],
+                "summary": "Show report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start Date",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "model.Categories": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "reqdto.CategoryRequest": {
+        "dto.CategoryRequest": {
             "type": "object",
             "required": [
                 "description",
@@ -412,7 +483,29 @@ const docTemplate = `{
                 }
             }
         },
-        "reqdto.ProductRequest": {
+        "dto.CheckoutItem": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.CheckoutRequest": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CheckoutItem"
+                    }
+                }
+            }
+        },
+        "dto.ProductRequest": {
             "type": "object",
             "required": [
                 "category_id",
@@ -434,6 +527,26 @@ const docTemplate = `{
                 "stock": {
                     "type": "integer",
                     "minimum": 0
+                }
+            }
+        },
+        "model.Categories": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         }

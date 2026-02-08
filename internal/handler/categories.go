@@ -5,26 +5,40 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Muh-Sidik/kasir-api/internal/model/dto/reqdto"
+	"github.com/Muh-Sidik/kasir-api/internal/model/dto"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/response"
+	"github.com/Muh-Sidik/kasir-api/internal/service"
 )
+
+type CategoryHandler struct {
+	service service.CategoryService
+}
+
+func NewCategoryHandler(srv service.CategoryService) *CategoryHandler {
+	return &CategoryHandler{
+		service: srv,
+	}
+}
 
 // @Summary      Show categories
 // @Description  get list category
 // @Tags         Categories
 // @Accept       json
 // @Produce      json
+// @Param		 name 		query		string 	false 	"Search by Category"
 // @Param		 page		query		int	false	"Page number"
 // @Param		 per_page	query		int	false	"Items per page"
 // @Success      200  {object}  map[string]any
 // @Router       /api/categories [get]
-func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
-	page := r.URL.Query().Get("page")
-	perPage := r.URL.Query().Get("per_page")
+func (h *CategoryHandler) Categories(w http.ResponseWriter, r *http.Request) {
+	queryParam := r.URL.Query()
+	search := queryParam.Get("name")
+	page := queryParam.Get("page")
+	perPage := queryParam.Get("per_page")
 
 	paginate := request.Paginate(page, perPage)
-	category, total, err := h.CategorySrv.GetCategories(paginate)
+	category, total, err := h.service.GetCategories(paginate, search)
 
 	if err != nil {
 		response.Failed(
@@ -50,11 +64,11 @@ func (h *Handler) Categories(w http.ResponseWriter, r *http.Request) {
 // @Tags         Categories
 // @Accept       json
 // @Produce      json
-// @Param		 category	body		reqdto.CategoryRequest	true	"Add category"
+// @Param		 category	body		dto.CategoryRequest	true	"Add category"
 // @Success      200  {object} 			map[string]any
 // @Router       /api/categories [post]
-func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	body, err := request.BindJSON[reqdto.CategoryRequest](r)
+func (h *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	body, err := request.BindJSON[dto.CategoryRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -63,7 +77,7 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.CategorySrv.CreateCategory(&body)
+	category, err := h.service.CreateCategory(&body)
 
 	if err != nil {
 		response.Failed(
@@ -88,10 +102,10 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 // @Param			id	path		int		true	"Category ID"
 // @Success			200	{object}	map[string]any
 // @Router			/api/categories/{id} [get]
-func (h *Handler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
+func (h *CategoryHandler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	category, err := h.CategorySrv.GetCategoryByID(id)
+	category, err := h.service.GetCategoryByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -125,10 +139,10 @@ func (h *Handler) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Param			account	body		model.Categories	true	"Update account"
 // @Success		200		{object}	map[string]any
 // @Router			/api/categories/{id} [put]
-func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
+func (h *CategoryHandler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	body, err := request.BindJSON[reqdto.CategoryRequest](r)
+	body, err := request.BindJSON[dto.CategoryRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -137,7 +151,7 @@ func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.CategorySrv.UpdateCategoryByID(id, &body)
+	category, err := h.service.UpdateCategoryByID(id, &body)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -170,10 +184,10 @@ func (h *Handler) UpdateCategoryByID(w http.ResponseWriter, r *http.Request) {
 // @Param			id	path		int		true	"Category ID"
 // @Success			200	{object}	map[string]any
 // @Router			/api/categories/{id} [delete]
-func (h *Handler) DeleteCategoryByID(w http.ResponseWriter, r *http.Request) {
+func (h *CategoryHandler) DeleteCategoryByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	err := h.CategorySrv.DeleteCategoryByID(id)
+	err := h.service.DeleteCategoryByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

@@ -7,13 +7,13 @@ type PaginateReq struct {
 	PageSize int `json:"page_size"`
 }
 
-type PaginateRes struct {
+type PaginateQuery struct {
 	PaginateReq
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
 }
 
-func Paginate(page, pageSize string) *PaginateRes {
+func Paginate(page, pageSize string) *PaginateQuery {
 	pageInt, errPage := strconv.Atoi(page)
 	pageSizeInt, errPageSize := strconv.Atoi(pageSize)
 
@@ -34,7 +34,7 @@ func Paginate(page, pageSize string) *PaginateRes {
 	offset := (pageInt - 1) * pageSizeInt
 	limit := pageInt
 
-	res := &PaginateRes{
+	res := &PaginateQuery{
 		Limit:  limit,
 		Offset: offset,
 	}

@@ -2,13 +2,15 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/Muh-Sidik/kasir-api/internal/model"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 )
 
 type CategoryRepository interface {
-	GetCategories(paginate *request.PaginateRes) ([]*model.Categories, int, error)
+	GetCategories(paginate *request.PaginateQuery, search string) ([]*model.Categories, int, error)
 	GetCategoryByID(id string) (*model.Categories, error)
 	CreateCategory(category *model.Categories) (*model.Categories, error)
 	UpdateCategoryByID(id string, category *model.Categories) (*model.Categories, error)
@@ -25,10 +27,27 @@ func NewCategoryRepository(db *sql.DB) CategoryRepository {
 	}
 }
 
-func (c *categoryRepo) GetCategories(paginate *request.PaginateRes) ([]*model.Categories, int, error) {
-	query := `SELECT id, name, description, created_at, updated_at FROM categories WHERE 1=1 LIMIT $1 OFFSET $2`
+func (c *categoryRepo) GetCategories(paginate *request.PaginateQuery, search string) ([]*model.Categories, int, error) {
+	var whereClause strings.Builder
+	var args []any
+	argsIdx := 1
 
-	rows, err := c.db.Query(query, paginate.Limit, paginate.Offset)
+	whereClause.WriteString("WHERE 1=1 ")
+
+	if search != "" {
+		fmt.Fprintf(&whereClause, " AND name ILIKE $%d", argsIdx)
+		args = append(args, "%"+search+"%")
+		argsIdx++
+	}
+
+	query := fmt.Sprintf(`
+		SELECT id, name, description, created_at, updated_at 
+		FROM categories 
+		%s
+		LIMIT $%d OFFSET $%d`, whereClause.String(), argsIdx, argsIdx+1)
+	args = append(args, paginate.Limit, paginate.Offset)
+
+	rows, err := c.db.Query(query, args...)
 
 	if err != nil {
 		return nil, 0, err
@@ -60,7 +79,15 @@ func (c *categoryRepo) GetCategories(paginate *request.PaginateRes) ([]*model.Ca
 	}
 
 	var total int
-	err = c.db.QueryRow(`SELECT COUNT(*) FROM categories WHERE 1=1`).Scan(&total)
+	err = c.db.QueryRow(
+		fmt.Sprintf(
+			`SELECT COUNT(*) 
+			FROM categories 
+			%s`,
+			whereClause.String(),
+		),
+		args[:len(args)-2]...,
+	).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}

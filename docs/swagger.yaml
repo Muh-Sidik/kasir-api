@@ -1,19 +1,6 @@
 basePath: /
 definitions:
-  model.Categories:
-    properties:
-      created_at:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      updated_at:
-        type: string
-    type: object
-  reqdto.CategoryRequest:
+  dto.CategoryRequest:
     properties:
       description:
         type: string
@@ -24,7 +11,21 @@ definitions:
     - description
     - name
     type: object
-  reqdto.ProductRequest:
+  dto.CheckoutItem:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  dto.CheckoutRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.CheckoutItem'
+        type: array
+    type: object
+  dto.ProductRequest:
     properties:
       category_id:
         type: string
@@ -41,6 +42,19 @@ definitions:
     - name
     - price
     - stock
+    type: object
+  model.Categories:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
     type: object
 info:
   contact:
@@ -61,6 +75,10 @@ paths:
       - application/json
       description: get list category
       parameters:
+      - description: Search by Category
+        in: query
+        name: name
+        type: string
       - description: Page number
         in: query
         name: page
@@ -90,7 +108,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/reqdto.CategoryRequest'
+          $ref: '#/definitions/dto.CategoryRequest'
       produces:
       - application/json
       responses:
@@ -172,12 +190,43 @@ paths:
       summary: Update a category
       tags:
       - Categories
+  /api/checkout:
+    post:
+      consumes:
+      - application/json
+      description: create checkout
+      parameters:
+      - description: Add checkout
+        in: body
+        name: checkout
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CheckoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create Checkout
+      tags:
+      - Transaction
   /api/product:
     get:
       consumes:
       - application/json
       description: get list product
       parameters:
+      - description: Search by Product Name
+        in: query
+        name: name
+        type: string
+      - description: Filter by category id
+        in: query
+        name: categoryId
+        type: string
       - description: Page number
         in: query
         name: page
@@ -207,7 +256,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/reqdto.ProductRequest'
+          $ref: '#/definitions/dto.ProductRequest'
       produces:
       - application/json
       responses:
@@ -277,7 +326,7 @@ paths:
         name: account
         required: true
         schema:
-          $ref: '#/definitions/reqdto.ProductRequest'
+          $ref: '#/definitions/dto.ProductRequest'
       produces:
       - application/json
       responses:
@@ -289,4 +338,29 @@ paths:
       summary: Update a product
       tags:
       - Product
+  /api/report:
+    get:
+      consumes:
+      - application/json
+      description: get report
+      parameters:
+      - description: Start Date
+        in: query
+        name: start_date
+        type: string
+      - description: End Date
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Show report
+      tags:
+      - Report
 swagger: "2.0"

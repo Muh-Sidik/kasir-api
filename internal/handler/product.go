@@ -5,27 +5,48 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Muh-Sidik/kasir-api/internal/model/dto/reqdto"
+	"github.com/Muh-Sidik/kasir-api/internal/model/dto"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/response"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/utils"
+	"github.com/Muh-Sidik/kasir-api/internal/service"
 )
+
+type ProductHandler struct {
+	service service.ProductService
+}
+
+func NewProductHandler(srv service.ProductService) *ProductHandler {
+	return &ProductHandler{
+		service: srv,
+	}
+}
 
 // @Summary      Show product
 // @Description  get list product
 // @Tags         Product
 // @Accept       json
 // @Produce      json
-// @Param		 page		query		int	false	"Page number"
-// @Param		 per_page	query		int	false	"Items per page"
+// @Param		 name 			query		string 	false 	"Search by Product Name"
+// @Param		 categoryId 	query		string 	false 	"Filter by category id"
+// @Param		 page			query		int		false	"Page number"
+// @Param		 per_page		query		int		false	"Items per page"
 // @Success      200  {object}  map[string]any
 // @Router       /api/product [get]
-func (h *Handler) Products(w http.ResponseWriter, r *http.Request) {
-	page := r.URL.Query().Get("page")
-	perPage := r.URL.Query().Get("per_page")
-
+func (h *ProductHandler) Products(w http.ResponseWriter, r *http.Request) {
+	queryParam := r.URL.Query()
+	page := queryParam.Get("page")
+	perPage := queryParam.Get("per_page")
 	paginate := request.Paginate(page, perPage)
-	product, total, err := h.ProductSrv.GetProduct(paginate)
+
+	queryDto := &dto.ProductQuery{
+		Name:       queryParam.Get("name"),
+		CategoryID: queryParam.Get("categoryId"),
+	}
+	queryDto.Limit = paginate.Limit
+	queryDto.Offset = paginate.Offset
+
+	product, total, err := h.service.GetProduct(queryDto)
 
 	if err != nil {
 		response.Failed(
@@ -51,11 +72,11 @@ func (h *Handler) Products(w http.ResponseWriter, r *http.Request) {
 // @Tags         Product
 // @Accept       json
 // @Produce      json
-// @Param		 product	body		reqdto.ProductRequest	true	"Add product"
+// @Param		 product	body		dto.ProductRequest	true	"Add product"
 // @Success      200  {object} 			map[string]any
 // @Router       /api/product [post]
-func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
-	body, err := request.BindJSON[reqdto.ProductRequest](r)
+func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	body, err := request.BindJSON[dto.ProductRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -64,7 +85,7 @@ func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := h.ProductSrv.CreateProduct(&body)
+	product, err := h.service.CreateProduct(&body)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrCategoryNotFound) {
@@ -95,10 +116,10 @@ func (h *Handler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 // @Param			id	path		int		true	"Product ID"
 // @Success			200	{object}	map[string]any
 // @Router			/api/product/{id} [get]
-func (h *Handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	product, err := h.ProductSrv.GetProductByID(id)
+	product, err := h.service.GetProductByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -129,13 +150,13 @@ func (h *Handler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 // @Accept			json
 // @Produce		json
 // @Param			id		path		int					true	"Product ID"
-// @Param			account	body		reqdto.ProductRequest	true	"Update product"
+// @Param			account	body		dto.ProductRequest	true	"Update product"
 // @Success		200		{object}	map[string]any
 // @Router			/api/product/{id} [put]
-func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProductHandler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	body, err := request.BindJSON[reqdto.ProductRequest](r)
+	body, err := request.BindJSON[dto.ProductRequest](r)
 	if err != nil {
 		response.Failed(
 			"Invalid Request",
@@ -144,7 +165,7 @@ func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	product, err := h.ProductSrv.UpdateProductByID(id, &body)
+	product, err := h.service.UpdateProductByID(id, &body)
 
 	if err != nil {
 		if errors.Is(err, utils.ErrCategoryNotFound) {
@@ -185,10 +206,10 @@ func (h *Handler) UpdateProductByID(w http.ResponseWriter, r *http.Request) {
 // @Param			id	path		int		true	"Product ID"
 // @Success			200	{object}	map[string]any
 // @Router			/api/product/{id} [delete]
-func (h *Handler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProductHandler) DeleteProductByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	err := h.ProductSrv.DeleteProductByID(id)
+	err := h.service.DeleteProductByID(id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

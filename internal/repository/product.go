@@ -2,20 +2,20 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/Muh-Sidik/kasir-api/internal/model"
 	"github.com/Muh-Sidik/kasir-api/internal/model/dto"
-	"github.com/Muh-Sidik/kasir-api/internal/pkg/request"
 	"github.com/Muh-Sidik/kasir-api/internal/pkg/utils"
 )
 
 type ProductRepository interface {
-	GetProduct(paginate *request.PaginateRes) ([]*dto.ProductCategory, int, error)
+	GetProduct(dto *dto.ProductQuery) ([]*model.ProductCategory, int, error)
 	CreateProduct(body *model.Product) (*model.Product, error)
-	GetProductByID(id string) (*dto.ProductCategory, error)
+	GetProductByID(id string) (*model.ProductCategory, error)
 	DeleteProductByID(id string) error
 	UpdateProductByID(id string, body *model.Product) (*model.Product, error)
-	GetProductByCategoryID(categoryID string, paginate *request.PaginateRes) ([]*dto.ProductCategory, int, error)
 }
 
 type productRepo struct {
@@ -28,8 +28,26 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 	}
 }
 
-func (p *productRepo) GetProduct(paginate *request.PaginateRes) ([]*dto.ProductCategory, int, error) {
-	query := `SELECT 
+func (p *productRepo) GetProduct(dto *dto.ProductQuery) ([]*model.ProductCategory, int, error) {
+	var whereClause strings.Builder
+	var args []any
+	argsIdx := 1
+
+	whereClause.WriteString("WHERE 1=1 ")
+
+	if dto.CategoryID != "" {
+		fmt.Fprintf(&whereClause, " AND p.category_id = $%d", argsIdx)
+		args = append(args, dto.CategoryID)
+		argsIdx++
+	}
+
+	if dto.Name != "" {
+		fmt.Fprintf(&whereClause, " AND p.name ILIKE $%d", argsIdx)
+		args = append(args, "%"+dto.Name+"%")
+		argsIdx++
+	}
+
+	query := fmt.Sprintf(`SELECT 
 		p.id,
 		p.name, 
 		p.price, 
@@ -39,10 +57,12 @@ func (p *productRepo) GetProduct(paginate *request.PaginateRes) ([]*dto.ProductC
 		p.updated_at 
 	FROM product p
 	JOIN categories c ON p.category_id = c.id
-	WHERE 1=1
-	LIMIT $1 OFFSET $2`
+	%s
+	ORDER BY created_at DESC
+	LIMIT $%d OFFSET $%d`, whereClause.String(), argsIdx, argsIdx+1)
+	args = append(args, dto.Limit, dto.Offset)
 
-	rows, err := p.db.Query(query, paginate.Limit, paginate.Offset)
+	rows, err := p.db.Query(query, args...)
 
 	if err != nil {
 		return nil, 0, err
@@ -50,10 +70,10 @@ func (p *productRepo) GetProduct(paginate *request.PaginateRes) ([]*dto.ProductC
 
 	defer rows.Close()
 
-	listProduct := make([]*dto.ProductCategory, 0)
+	listProduct := make([]*model.ProductCategory, 0)
 
 	for rows.Next() {
-		var product dto.ProductCategory
+		var product model.ProductCategory
 		err := rows.Scan(
 			&product.ID,
 			&product.Name,
@@ -76,11 +96,11 @@ func (p *productRepo) GetProduct(paginate *request.PaginateRes) ([]*dto.ProductC
 	}
 
 	var total int
-	err = p.db.QueryRow(`
+	err = p.db.QueryRow(fmt.Sprintf(`
 		SELECT COUNT(*) FROM product p
 		JOIN categories c ON p.category_id = c.id
-		WHERE 1=1
-	`).Scan(&total)
+		WHERE %s
+	`, whereClause.String()), args[:len(args)-2]...).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -129,7 +149,7 @@ func (p *productRepo) CreateProduct(body *model.Product) (*model.Product, error)
 	return &product, nil
 }
 
-func (p *productRepo) GetProductByID(id string) (*dto.ProductCategory, error) {
+func (p *productRepo) GetProductByID(id string) (*model.ProductCategory, error) {
 	query := `SELECT 
 		p.id,
 		p.name, 
@@ -149,7 +169,7 @@ func (p *productRepo) GetProductByID(id string) (*dto.ProductCategory, error) {
 		return nil, rows.Err()
 	}
 
-	var product dto.ProductCategory
+	var product model.ProductCategory
 	err := rows.Scan(
 		&product.ID,
 		&product.Name,
@@ -219,64 +239,4 @@ func (p *productRepo) UpdateProductByID(id string, body *model.Product) (*model.
 	product.CategoryID = body.CategoryID
 
 	return &product, nil
-}
-
-func (p *productRepo) GetProductByCategoryID(categoryID string, paginate *request.PaginateRes) ([]*dto.ProductCategory, int, error) {
-	query := `SELECT 
-		p.id,
-		p.name, 
-		p.price, 
-		p.stock, 
-		c.name as category_name,
-		p.created_at, 
-		p.updated_at 
-	FROM product p
-	JOIN categories c ON p.category_id = c.id
-	WHERE p.category_id = $1 
-	LIMIT $2 OFFSET $3`
-
-	rows, err := p.db.Query(query, categoryID, paginate.Limit, paginate.Offset)
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	defer rows.Close()
-
-	listProduct := make([]*dto.ProductCategory, 0)
-
-	for rows.Next() {
-		var product dto.ProductCategory
-		err := rows.Scan(
-			&product.ID,
-			&product.Name,
-			&product.Price,
-			&product.Stock,
-			&product.CategoryName,
-			&product.CreatedAt,
-			&product.UpdatedAt,
-		)
-
-		if err != nil {
-			return nil, 0, err
-		}
-
-		listProduct = append(listProduct, &product)
-	}
-
-	if rows.Err() != nil {
-		return nil, 0, rows.Err()
-	}
-
-	var total int
-	err = p.db.QueryRow(`
-		SELECT COUNT(*) FROM product p
-		JOIN categories c ON p.category_id = c.id
-		WHERE p.category_id = $1
-	`, categoryID).Scan(&total)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return listProduct, total, nil
 }
